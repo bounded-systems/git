@@ -4,7 +4,10 @@
   "description": "Git CLI wrapper with policy enforcement and stale-lock recovery",
   "bounded": {
     "tagline": "Git CLI wrapper with policy enforcement and stale-lock recovery",
-    "kind": "door"
+    "kind": "door",
+    "facet": "verb",
+    "role": "capability-seam",
+    "domain": "git"
   },
   "license": "MIT",
   "type": "module",
