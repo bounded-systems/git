@@ -43,6 +43,7 @@ const LOCK_ERROR_RE = /Unable to create '([^']+\.lock)': File exists/;
 /** Default age past which an *unheld* lock is treated as abandoned. */
 export const DEFAULT_STALE_AGE_MS = 30_000;
 
+/** Minimal stat of a git lock file, for staleness checks. */
 export type LockStat = {
   /** Size in bytes; 0 for a lock git opened but never wrote to. */
   sizeBytes: number;
@@ -50,6 +51,7 @@ export type LockStat = {
   mtimeMs: number;
 };
 
+/** Injectable seams for lock recovery (stat / holder-probe / remove / clock / threshold). */
 export type LockRecoveryDeps = {
   /** Stat the lock file; `null` when it no longer exists. */
   statLock?: (path: string) => LockStat | null;
@@ -67,6 +69,7 @@ export type LockRecoveryDeps = {
   staleAgeMs?: number;
 };
 
+/** Outcome of a lock-recovery attempt: recovered (with whether the file was removed) or not (with a reason). */
 export type LockRecovery =
   | { recovered: true; path: string; removed: boolean }
   | { recovered: false; path: string | null; reason: string };
@@ -153,10 +156,15 @@ export function recoverStaleLock(stderr: string, deps: LockRecoveryDeps = {}): L
   return { recovered: true, path, removed: true };
 }
 
-type MinimalSpawnResult = {
+/** The minimal spawn-result shape the lock-recovery seam needs (status + optional streams/error). */
+export type MinimalSpawnResult = {
+  /** Exit status, or `null` when terminated by a signal. */
   status: number | null;
+  /** Captured stdout, if any. */
   stdout?: unknown;
+  /** Captured stderr, if any. */
   stderr?: unknown;
+  /** A spawn error, if any. */
   error?: Error | undefined;
 };
 
@@ -167,12 +175,14 @@ function asText(value: unknown): string {
 }
 
 /** True when a spawn result is a git invocation that failed on lock contention. */
+/** Whether a failed `git` spawn result is a retryable `index.lock` contention (vs a real error). */
 export function isRetryableGitLock(file: string, result: MinimalSpawnResult): boolean {
   if (file !== "git") return false;
   if ((result.status ?? 1) === 0 && !result.error) return false;
   return parseLockPath(asText(result.stderr)) !== null;
 }
 
+/** {@link LockRecoveryDeps} plus an observability hook fired after each recovery attempt. */
 export type LockRecoveryHooks = LockRecoveryDeps & {
   /** Notified after each recovery attempt (recovered or not) for logging. */
   onRecover?: (recovery: LockRecovery) => void;
@@ -194,7 +204,8 @@ export function runWithGitLockRecovery<R extends MinimalSpawnResult>(
   return recovery.recovered ? run() : first;
 }
 
-type SpawnSeam<O, R extends MinimalSpawnResult> = (file: string, args: string[], options: O) => R;
+/** A `(file, args, options) => result` spawn function the lock-recovery wrapper decorates. */
+export type SpawnSeam<O, R extends MinimalSpawnResult> = (file: string, args: string[], options: O) => R;
 
 /**
  * Decorate a `(file, args, opts)` spawn seam so any **git** call that fails on
