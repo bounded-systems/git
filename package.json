@@ -1,6 +1,6 @@
 {
   "name": "@bounded-systems/git",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Git CLI wrapper with policy enforcement and stale-lock recovery",
   "bounded": {
     "tagline": "Git CLI wrapper with policy enforcement and stale-lock recovery",
@@ -55,9 +55,9 @@
     "typescript": "^6.0.3"
   },
   "dependencies": {
-    "@bounded-systems/env": "npm:@jsr/bounded-systems__env",
-    "@bounded-systems/fs": "npm:@jsr/bounded-systems__fs",
-    "@bounded-systems/policy": "npm:@jsr/bounded-systems__policy",
-    "@bounded-systems/proc": "npm:@jsr/bounded-systems__proc"
+    "@bounded-systems/env": "npm:@jsr/bounded-systems__env@^0.2.0",
+    "@bounded-systems/fs": "npm:@jsr/bounded-systems__fs@^0.2.1",
+    "@bounded-systems/policy": "npm:@jsr/bounded-systems__policy@^0.2.1",
+    "@bounded-systems/proc": "npm:@jsr/bounded-systems__proc@^0.2.3"
   }
 }
