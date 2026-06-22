@@ -30,27 +30,48 @@ export {
   type LockRecoveryDeps,
   type LockRecoveryHooks,
   type LockStat,
+  type MinimalSpawnResult,
+  type SpawnSeam,
 } from "./lock.ts";
 
+// Re-export the policy types that surface in this package's public API, so
+// consumers depend on git's contract, not on @bounded-systems/policy directly
+// (closes deno doc's `private-type-ref`).
+export type { PolicyState, PolicyRole, PolicyDecision } from "@bounded-systems/policy";
+
+/** The result of an {@link execGit} call: exit code, captured output, and the policy decision. */
 export type GitExecResult = {
+  /** The git process exit code. */
   exitCode: number;
+  /** Captured standard output. */
   stdout: string;
+  /** Captured standard error. */
   stderr: string;
+  /** The policy decision that gated the call, or `null` when policy wasn't enforced. */
   policy: PolicyDecision | null;
 };
 
+/** What to run and how to gate it for {@link execGit}. */
 export type GitExecOptions = {
+  /** The git subcommand (e.g. `status`, `commit`, `push`). */
   subcommand: string;
+  /** Remaining git arguments. */
   args: string[];
+  /** Working directory for the call. */
   cwd?: string | undefined;
   /** If set, enforce policy before executing. */
   state?: PolicyState | undefined;
+  /** The actor role policy is evaluated against. */
   role?: PolicyRole | undefined;
 };
 
+/** Environment passed to the git child — recognized capability/role hints plus arbitrary passthrough. */
 export type GitExecEnv = {
+  /** Capability state hint read by the policy gate. */
   PRX_CAPABILITY_STATE?: string;
+  /** Agent role hint read by the policy gate. */
   PRX_AGENT_ROLE?: string;
+  /** Any other environment variables. */
   [key: string]: string | undefined;
 };
 
@@ -160,6 +181,7 @@ export function execGit(opts: GitExecOptions, env: GitExecEnv = processEnv()): G
   };
 }
 
+/** Render a {@link GitExecResult} as a one-line `plain` summary or pretty `json`. */
 export function formatGitExecResult(result: GitExecResult, format: "plain" | "json"): string {
   if (format === "json") {
     return JSON.stringify(result, null, 2);
