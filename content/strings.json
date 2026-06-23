@@ -1,0 +1,10 @@
+{
+  "name": {
+    "type": "name",
+    "value": "git"
+  },
+  "description": {
+    "type": "meta",
+    "value": "Git CLI wrapper with policy enforcement and stale-lock recovery"
+  }
+}
