@@ -5,6 +5,10 @@
   },
   "description": {
     "type": "meta",
-    "value": "Git CLI wrapper with policy enforcement and stale-lock recovery"
+    "value": "A wrapper around the git CLI with policy enforcement and stale-lock recovery.  Git invocations route through here so subcommands are policy-checked before they run, and a stale index. lock left by a crashed process is detected and recovered rather than wedging the repo."
+  },
+  "keywords": {
+    "type": "body",
+    "value": "GIT · CLI-WRAPPER · POLICY · STALE-LOCK · CAPABILITY · SEAM"
   }
 }
