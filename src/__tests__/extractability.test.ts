@@ -19,6 +19,9 @@ test("@bounded-systems/git upholds its seam claim", () => {
       "@bounded-systems/env",
       "@bounded-systems/fs",
     ],
-    test: ["@bounded-systems/git", "@bounded-systems/seam-check", "node:fs"],
+    // node:child_process is TEST-only (the prx-e7cl signing test spawns
+    // ssh-keygen + git to build a real signed-commit fixture); prod still routes
+    // every spawn through @bounded-systems/proc.
+    test: ["@bounded-systems/git", "@bounded-systems/seam-check", "node:fs", "node:child_process"],
   });
 });
