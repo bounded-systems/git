@@ -144,22 +144,53 @@ export function execGit(opts: GitExecOptions, env: GitExecEnv = processEnv()): G
   // `git diff`, and similar large reads cannot hit the default 1 MiB stdout cap.
   // ai-home-bbdm1: a lock-contention failure (stale index.lock from a crashed
   // sibling) triggers a single safe-guarded stale-lock recovery + retry.
-  // GH-388/GH-360: headless-safe signing. prx's provenance signing is ed25519
-  // over the chain (keeper's commit-tree), NEVER git's gpg/ssh commit signing —
-  // which is the OPERATOR's config and fails in non-interactive/agent contexts
-  // (e.g. 1Password SSH: "agent returned an error" → "failed to write commit
-  // object"). Disable commit/tag signing at this single git seam so every prx
-  // caller (keeper, `prx tools git`, the executor leg) is robust regardless of
-  // the operator's commit.gpgsign.
-  const signingOff =
-    opts.subcommand === "commit"
-      ? ["-c", "commit.gpgsign=false"]
-      : opts.subcommand === "tag"
-        ? ["-c", "tag.gpgsign=false"]
-        : [];
+  // prx-e7cl / GH-388/GH-360: sign with OUR OWN key, headlessly — never the
+  // operator's 1Password SSH agent (which hangs non-interactively: "agent
+  // returned an error" → "failed to write commit object"). When
+  // `PRX_COMMIT_SIGNING_KEY` names an ed25519 SSH *private key file* (not an
+  // agent identity), every keeper/executor `commit`, `tag`, and `commit-tree` is
+  // SSH-signed at creation, so commits land verified instead of being patched
+  // after a branch-protection merge block. When it is unset we keep the
+  // headless-safe default (signing disabled) so a misconfigured operator agent
+  // can never hang a prx caller. The ed25519 provenance chain (anchored-chain)
+  // remains the primary integrity layer; this is operator-layer defense in depth.
+  const signingKeyFile = (env as Record<string, string>)["PRX_COMMIT_SIGNING_KEY"];
+  const signs =
+    opts.subcommand === "commit" ||
+    opts.subcommand === "tag" ||
+    opts.subcommand === "commit-tree";
+  const signingConfig =
+    signingKeyFile && signs
+      ? [
+          "-c",
+          "gpg.format=ssh",
+          "-c",
+          `user.signingkey=${signingKeyFile}`,
+          "-c",
+          "commit.gpgsign=true",
+          "-c",
+          "tag.gpgsign=true",
+        ]
+      : opts.subcommand === "commit"
+        ? ["-c", "commit.gpgsign=false"]
+        : opts.subcommand === "tag"
+          ? ["-c", "tag.gpgsign=false"]
+          : [];
+  // `git commit-tree` does not honor commit.gpgsign — it signs only with an
+  // explicit `-S`. Inject it (it precedes the positional <tree>) when we sign.
+  const commitTreeSign =
+    signingKeyFile && opts.subcommand === "commit-tree" ? ["-S"] : [];
   const result = runWithGitLockRecovery(() =>
     spawnCapture(
-      ["git", "-C", opts.cwd ?? process.cwd(), ...signingOff, opts.subcommand, ...opts.args],
+      [
+        "git",
+        "-C",
+        opts.cwd ?? process.cwd(),
+        ...signingConfig,
+        opts.subcommand,
+        ...commitTreeSign,
+        ...opts.args,
+      ],
       { env: env as Record<string, string> },
     ),
   );
