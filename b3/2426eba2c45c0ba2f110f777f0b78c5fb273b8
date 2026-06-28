@@ -1,0 +1,23 @@
+src/index.ts
+  s_8bfe0e8de6557c::t_99d2db8131ab63 147-182,185-193
+src/__tests__/extractability.test.ts
+  s_8bfe0e8de6557c::t_408e1793b40c3f 22-25
+src/__tests__/signing.test.ts
+  s_8bfe0e8de6557c::t_3064a2e41d19c7 1-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "b32426eba2c45c0ba2f110f777f0b78c5fb273b8",
+  "prompts": {},
+  "sessions": {
+    "s_8bfe0e8de6557c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "159cecef-b114-4932-b219-6b198cbf9abd",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Robert DeLanghe <1240090+bdelanghe@users.noreply.github.com>"
+    }
+  }
+}
